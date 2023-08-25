@@ -97,7 +97,8 @@
 //! ```
 
 #![allow(unused)]
-use std::os::raw::c_int;
+use std::ptr;
+use std::{os::raw::c_int, ptr::NonNull};
 use std::mem::ManuallyDrop;
 
 mod cint;
@@ -250,7 +251,7 @@ impl CINTR2CDATA {
     pub fn cint3c2e_ip1_optimizer_rust(&mut self){
         self.cint_del_optimizer_rust();
         unsafe {
-            cint::int3c2e_ip1_optimizer(&mut self.c_opt.0, 
+            cint::cint3c2e_ip1_optimizer(&mut self.c_opt.0, 
                                        self.c_atm.0, self.c_natm, 
                                        self.c_bas.0, self.c_nbas, 
                                        self.c_env.0);
@@ -259,7 +260,7 @@ impl CINTR2CDATA {
     pub fn cint3c2e_ip2_optimizer_rust(&mut self){
         self.cint_del_optimizer_rust();
         unsafe {
-            cint::int3c2e_ip2_optimizer(&mut self.c_opt.0, 
+            cint::cint3c2e_ip2_optimizer(&mut self.c_opt.0, 
                                        self.c_atm.0, self.c_natm, 
                                        self.c_bas.0, self.c_nbas, 
                                        self.c_env.0);
@@ -663,9 +664,6 @@ impl CINTR2CDATA {
             //let shls = Vec::from_raw_parts(c_shls, shls_len, shls_cap);
             new_buf = Vec::from_raw_parts(c_buf, buf_len, buf_cap);
             
-            //println!("i={},j={},di={},dj={}", i,j,di,dj);
-            //println!("new_buf={:?}", new_buf);
-            //println!("new_buf_len={}", new_buf.len());
         }
         new_buf
     }
@@ -682,7 +680,6 @@ impl CINTR2CDATA {
         let mut di = self.cint_cgto_rust(i);
         let mut dj = self.cint_cgto_rust(j);
         let mut dk = self.cint_cgto_rust(k);
-        println!("di,dj,dk = {} {} {}", di, dj, dk);
         let mut shls: Vec<c_int> = vec![i as c_int,j as c_int,k as c_int];
         let mut shls = ManuallyDrop::new(shls);
         let (c_shls,shls_len,shls_cap) = (shls.as_mut_ptr() as *mut c_int,shls.len(),shls.capacity());
@@ -690,16 +687,17 @@ impl CINTR2CDATA {
         let mut buf = ManuallyDrop::new(buf);
         let (c_buf, buf_len, buf_cap) = (buf.as_mut_ptr() as *mut f64, buf.len(), buf.capacity());
         let mut new_buf:Vec<f64>;
+
         unsafe {
             match op_type { 
                 IP3C2E::IP1 => {
                     match self.cint_type {
-                        CintType::Spheric => cint::int3c2e_ip1_sph(c_buf, c_shls,
+                        CintType::Spheric => cint::cint3c2e_ip1_sph(c_buf, c_shls,
                                                             self.c_atm.0, self.c_natm,
                                                             self.c_bas.0,self.c_nbas,
                                                             self.c_env.0,
                                                             self.c_opt.0),
-                        CintType::Cartesian => cint::int3c2e_ip1_cart(c_buf, c_shls,
+                        CintType::Cartesian => cint::cint3c2e_ip1_cart(c_buf, c_shls,
                                                             self.c_atm.0, self.c_natm,
                                                             self.c_bas.0,self.c_nbas,
                                                             self.c_env.0,
@@ -707,12 +705,12 @@ impl CINTR2CDATA {
                     }},
                 IP3C2E::IP2 => {
                     match self.cint_type {
-                        CintType::Spheric => cint::int3c2e_ip2_sph(c_buf, c_shls,
+                        CintType::Spheric => cint::cint3c2e_ip2_sph(c_buf, c_shls,
                                                             self.c_atm.0, self.c_natm,
                                                             self.c_bas.0,self.c_nbas,
                                                             self.c_env.0,
                                                             self.c_opt.0),
-                        CintType::Cartesian => cint::int3c2e_ip2_cart(c_buf, c_shls,
+                        CintType::Cartesian => cint::cint3c2e_ip2_cart(c_buf, c_shls,
                                                             self.c_atm.0, self.c_natm,
                                                             self.c_bas.0,self.c_nbas,
                                                             self.c_env.0,
